@@ -1,4 +1,4 @@
-eeeee#  Candlestick Graph using React, D3FC and WebGL
+#  Candlestick Graph using React, D3FC and WebGL
 
   This project uses WebGL to render a candlestick price chart. React is a front-end Javascript framework that can utilize the D3 and D3FC libraries to leverage the power of WebGL for visualizing time series price data. WebGL is a JavaScript API for rendering interactive 2D and 3D graphics within any compatible web browser. Typical charts that use SVG type rendering can only handle a limited amount of data. Noticeable performance issues occur when several tens of thousands of datapoints need to be rendered; panning becomes slower and interacting with the chart is a lot more choppy.
   
