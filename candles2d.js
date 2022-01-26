@@ -106,7 +106,7 @@ class Candles2d extends Component {
 
         this.stock_ticker = props.stock_ticker;
         this.stock_company_name = props.stock_company_name;
-        //this.current_value = props.data_x[props.data_x.length-1];
+        this.current_value = props.data_x[props.data_x.length-1];
         this.current_timeframe = props.current_timeframe;
         this.current_stock_price = props.current_stock_price;
         this.ols_data = props.ols_data;
@@ -154,46 +154,14 @@ class Candles2d extends Component {
         this.xScaleOriginal = this.xScale.copy();
         this.yScaleOriginal = this.yScale.copy();
 
-        this.xScaleClone = this.xScale.copy();
-        this.yScaleClone = this.yScale.copy();
-
         this.dragY = d3.drag()
         this.dragX = d3.drag()
-
-        this.tk = 1;
-        this.tx = 0;
-        this.ty = 0;
-
-        this.last_tx = 0;
-        this.last_ty = 0;
-
-        this.kx = 1;
-        this.ky = 1;
-        this.kxy = 1;
-
-        this.zoomID = "xy"
-        this.lastZoom1 = "xy"        
-        this.lastZoom2 = "xy"
-        this.lastK = 1;
-
-        this.xOffsetNew = 0;
-        this.xOffsetOld = 0;      
-        
-        this.yOffsetNew = 0;
-        this.yOffsetOld = 0;
+    
+	this.lastY = t.y;
+        this.lastX = t.x;
+        this.lastK = t.k;
 
         this.count = 0;
-
-        this.yCollector = 0;
-        this.xCollector = 0;
-
-        this.thumbLock = false;
-        this.thumbLock2 = false;
-        this.thumbLock3 = false;  
-        this.thumbLock4 = false;
-
-        this.last_real_tx = 0;
-        this.last_real_ty = 0; 
 
         this.crosshair_data = [{x:0,y:0}]
         this.rect_coords = [0,0]
@@ -225,15 +193,9 @@ class Candles2d extends Component {
 
       var margin = {top: 20, right: 80, bottom: 30, left: 50}
 
-      //.select("d3fc-svg.plot-area")
-
       var svg = d3
       .select("d3fc-svg")
       .select("svg")      
-
-
-      
-      
 
       //svg
       //.append("g")
@@ -337,7 +299,6 @@ class Candles2d extends Component {
 
         this.chart_type = nextProps.chart_type
 
-        console.log(this.chart_type)
 
         this.array_dates = nextProps.array_dates
 
@@ -350,13 +311,7 @@ class Candles2d extends Component {
         this.price_lows = Object.keys(this.candle_data).map((key) => { return this.candle_data[key].low })
         this.price_highs = Object.keys(this.candle_data).map((key) => { return this.candle_data[key].high })   
 
-        console.log(this.set_new, nextProps.set_new)
-
         if (nextProps.set_new != this.set_new && nextProps.bar_data.length != 0) {  
-          
-          console.log("NEW SET")
-         
-          //this.xScale = d3.scaleTime().domain(d3.extent(this.candle_data, function(d) { return new Date(d.date);}))
 
           var period = 200; 
 
@@ -380,7 +335,6 @@ class Candles2d extends Component {
             plot_height: nextProps.scene_height,
             
             }, () => {
-            //this.set_scales()
             this.redraw()
           })
 
@@ -391,7 +345,6 @@ class Candles2d extends Component {
         this.xScale.ticks(12);
         this.yScale.ticks(12);
 
-        // ---------------------------------------------------------
 
         this.dragX = d3.drag()
         .on('drag', (event) => {
@@ -407,8 +360,6 @@ class Candles2d extends Component {
           d3.select('#chart .plot-area').call(this.zoom.scaleBy, factor);
         });
               
-
-        // ---------------------------------------------------------
 
         const currentvalue_width = this.state.currentvalue_width
         const zeroline_width = this.state.zeroline_width
@@ -466,18 +417,18 @@ class Candles2d extends Component {
 			  .closeValue(d => d.close)
         .decorate(program => {
           fillColor(program)
-          //  program
-          //      .vertexShader()
-          //      .appendHeader('attribute vec4 aFillColor;')
-          //      .appendHeader('varying vec4 vFillColor;')
-          //      .appendBody('vFillColor = aFillColor;');
-          //  program
-          //      .fragmentShader()
-          //      .appendHeader('varying vec4 vFillColor;')
-          //      .appendBody('gl_FragColor = vFillColor;');
-          //  program
-          //      .buffers()
-          //      .attribute('aFillColor', [0, 0, 1, 1]);
+            program
+                .vertexShader()
+                .appendHeader('attribute vec4 aFillColor;')
+                .appendHeader('varying vec4 vFillColor;')
+                .appendBody('vFillColor = aFillColor;');
+            program
+                .fragmentShader()
+                .appendHeader('varying vec4 vFillColor;')
+                .appendBody('gl_FragColor = vFillColor;');
+            program
+                .buffers()
+                .attribute('aFillColor', [0, 0, 1, 1]);
          });
 
         
@@ -485,12 +436,6 @@ class Candles2d extends Component {
 
         const container = document.querySelector('d3fc-svg');
         const svg = d3.select(container).select('svg');
-
-        // const xAxis = d3.axisBottom(this.xScale).tickFormat('').ticks(12);
-        // const yAxis = d3.axisRight(this.yScale).tickFormat('').ticks(12);
-
-        // const xAxisJoin = fc.dataJoin('g', 'x-axis');
-        // const yAxisJoin = fc.dataJoin('g', 'y-axis');
 
         var series; 
         this.chart_type == "candle" ? series = this.candleSeries : series = this.lineSeries;
@@ -512,9 +457,8 @@ class Candles2d extends Component {
           .xTickFormat((index, i) => {
 
             if (i<this.dlen && i>0){
-            //if (index==100 || index==200 || index==300 || index==400){//,i==500,i==600,i==700,i==800) {
               try{
-                return this.candle_data[index].date//.slice(0,10)
+                return this.candle_data[index].date
               }
               catch {
                 return ''
@@ -548,17 +492,6 @@ class Candles2d extends Component {
                 var crosshair_data = this.crosshair_data
                 svg.datum(crosshair_data).call(this.crosshair)
             })
-            // .on('measure', event => {
-            //   const { width, height } = event.detail;
-            //   this.xScale.range([10, width - 30]);
-            //   this.yScale.range([5, height - 20]);
-            //   xAxisJoin(svg, d => [d])
-            //       .attr('transform', `translate(0, ${height - 20})`)
-            //       .call(xAxis);
-            //   yAxisJoin(svg, d => [d])
-            //       .attr('transform', `translate(${width - 30}, 0)`)
-            //       .call(yAxis);
-            // }) 
             .call(this.zoom)
             }
           );
@@ -606,226 +539,55 @@ class Candles2d extends Component {
         .annotationSvgCrosshair()
         .xScale(this.xScale)
         .yScale(this.yScale)
-        //.xLabel(d => format(this.xScale.invert(d.x)))
-        //.yLabel(d => format(this.yScale.invert(d.close)))
+        .xLabel(d => format(this.xScale.invert(d.x)))
+        .yLabel(d => format(this.yScale.invert(d.close)))
         .decorate(sel => {
             sel.selectAll('.point>path').attr('transform', 'scale(0)');
             sel
             .style('stroke','#00ff00')
             .style('stroke-width', "4px")
             .style('stroke-dasharray','3, 3')            
-        });        
-               
-        this.zoom = d3.zoom()
-        //.scaleExtent([0.8, 50])
-        .on("zoom", (event) => {
+        }); 
+	    
+	d3.zoom()        
+        .on("zoom", (event) => {                
             
-            const t = event.transform 
+            // ZOOMING 
+            if (event.sourceEvent && event.sourceEvent.type == "wheel") {
+
+              let domainX = this.xScale.domain();      
+              let linearX = d3.scaleLinear().domain(this.xScale.range()).range([0, domainX[0] - domainX[1]]);
+              let deltaX = linearX((t.x - this.lastX))///t.k);   
+
+              let domainY = this.yScale.domain();
+              let linearY = d3.scaleLinear().domain(this.yScale.range()).range([domainY[1] - domainY[0], 0]);
+              let deltaY = linearY((t.y - this.lastY)/t.k);
+              
+              this.xScale.domain([domainX[0] + deltaX, domainX[1] - deltaX]);                     
+              this.yScale.domain([domainY[0] - deltaY, domainY[1] + deltaY]);  
+
+            }
             
-            //console.log(event.sourceEvent.movementX);
-            //console.log(event.sourceEvent.movementY);
-
-            var deltaX, deltaY
-                    
-            if (this.zoomID == "x") {               
-              if (this.lastZoom1 != "x"){                    
-                t['x'] = this.tx;
-                t['k'] = this.kx;
-                this.xCollector = 0;
-              }
-              t['y'] = this.ty;
-              this.xScale.domain(t.rescaleX(this.xScaleOriginal).domain());
-              this.tx = t.x
-              this.lastZoom1 = "x"
-              this.lastZoom2 = "x"
-              this.kx = t.k;
-              this.thumbLock = false
-              this.thumbLock2 = false
-              this.thumbLock3 = false
-
-              this.xCollector = this.xCollector + (t.x - this.last_tx)
-
-              this.last_tx = t.x;
-              this.last_ty = t.y;
-              this.lastK = t.k;
-              
-            }
-
-            if (this.zoomID == "y") {              
-              if (this.lastZoom1 != "y"){  
-                if (!this.thumbLock4) {      
-                  
-                  console.log("THUMB 4")
-                  
-                  t['x'] = this.last_tx
-                  t['y'] = this.last_ty
-
-                  this.thumbLock4 = true
-                } else {                  
-                  t['y'] = this.ty; 
-                  t['k'] = this.ky;
-                  this.yCollector = 0;
-                }
-              }
-              // else { 
-              //   t['y'] = this.last_ty;
-              //   t['k'] = this.ky;
-              //   this.yCollector = 0;
-              // }
-              t['x'] = this.tx; 
-              this.yScale.domain(t.rescaleY(this.yScaleOriginal).domain());               
-              this.ty = t.y
-              this.lastZoom1 = "y"
-              this.lastZoom2 = "y"
-              this.ky = t.k
-              this.thumbLock = false
-              this.thumbLock2 = false
-              this.thumbLock3 = false
-
-              console.log("DRAG", "t.y:", t.y, "this.ty", this.ty, "this.last_ty", this.last_ty, "yColl", this.yCollector, "t.x", t.x, "this.tx", this.tx, "this.last_tx", this.last_tx, "this.last_real_tx", this.last_real_tx, "xColl", this.xCollector)
-              console.log("_______________________________")
-
-              this.yCollector = this.yCollector + (t.y - this.last_ty)
-
-              this.last_tx = t.x;
-              this.last_ty = t.y;
-              this.lastK = t.k;                            
-            }
-
-            if (this.zoomID == "xy") {             
-              
-              // ZOOMING
-              if (t.k != this.lastK && this.lastZoom1 == "xy") {
-                //console.log('zooooooooooom', t.k, this.lastK)
-                if (this.lastZoom1 != "xy") {
-                  if (this.lastZoom1 == "y") { 
-                    //this.ty = t.y}
-                    t['x'] = this.tx
-                  }
-                  if (this.lastZoom1 == "x") { 
-                    //this.tx = t.x
-                    t['y'] = this.ty
-                  }
-                  //t['x'] = this.tx;
-                  //t['y'] = this.ty;
-                  t['k'] = this.kxy;
-                }
-                this.xScale.domain(t.rescaleX(this.xScaleOriginal).domain());
-                this.yScale.domain(t.rescaleY(this.yScaleOriginal).domain());                  
-                //this.tx = t.x;
-                //this.ty = t.y;
-                this.lastZoom = "xy";
-                this.thumbLock = false
-                this.thumbLock2 = false
-
-                this.last_tx = t.x;
-                this.last_ty = t.y;
-                this.lastK = this.kxy//t.k;
-              }
-              // PANNING
-              else {
-
-                if (this.lastZoom1 != "xy") {
-
-                  if (this.lastZoom1 == "y") { 
-                    t['x'] = this.tx
-                  }
-                  if (this.lastZoom1 == "x") { 
-                    t['y'] = this.ty
-                  }
-                  
-                  t['k'] = this.lastK                  
-                  
-                } 
-                else {
-
-                      deltaX = t.x - this.last_real_tx
-                      deltaY = t.y - this.last_real_ty
-
-                      this.last_real_ty = t.y;
-                      this.last_real_tx = t.x;      
-                      
-                      // HANDLE INITIAL TRANSITION FROM AXIS DRAGS
-                      if (!this.thumbLock2) {
-
-                        console.log("THUMB 2")
-
-                        t['x'] = this.last_tx;
-                        t['y'] = this.last_ty;
-
-                        if (this.lastZoom2 == "x") { deltaY = Math.abs(this.yCollector); deltaX = 0.01; }
-                        if (this.lastZoom2 == "y") { deltaX = Math.abs(this.xCollector); deltaY = 0.01; }    
-                                      
-                        this.thumbLock2 = true
-
-                      } else {
-
-                        if (!this.thumbLock3) {
-
-                          console.log("THUMB 3")
-                          
-                          t['x'] = this.last_tx// + deltaX;
-                          t['y'] = this.last_ty// + deltaY;
-
-                          deltaX = Math.abs(this.xCollector);
-                          deltaY = Math.abs(this.yCollector);                          
-
-                        }
-                        else {
-
-                          t['x'] = this.last_tx + deltaX  // <--- this is the problem, massive delta which equals
-                          t['y'] = this.last_ty + deltaY  //      the jump plus the actual pan move
-                        
-                        }
-
-                      }
-
-                      this.xCollector = t.x - this.last_real_tx;
-                      this.yCollector = t.y - this.last_real_ty;
-
-                      //console.log("t.y:", t.y, "last_real_ty:", this.last_real_ty ,"last_ty:", this.last_ty, "deltaY:", deltaY, "yColl", this.yCollector, "t.x:", t.x, "last_real_tx", this.last_real_tx, "last_tx:", this.last_tx, "deltaX:", deltaX, "xColl", this.xCollector)
-                      
-                      t['k'] = this.kx;
-                      this.xScale.domain(t.rescaleX(this.xScaleOriginal).domain());                        
+            // PANNING
+            if (event.sourceEvent && event.sourceEvent.type != "wheel") {
+    
+              let domainX = this.xScale.domain();      
+              let linearX = d3.scaleLinear().domain(this.xScale.range()).range([0, domainX[0] - domainX[1]]);       
+              let deltaX = linearX(t.x - this.lastX);
+              this.xScale.domain([domainX[0] + deltaX, domainX[1] + deltaX]);      
                             
-                      t['k'] = this.ky; 
-                      this.yScale.domain(t.rescaleY(this.yScaleOriginal).domain()); 
-
-                      this.tx = this.tx + deltaX;
-                      this.ty = this.ty + deltaY; 
-
-                      this.last_tx = t.x 
-                      this.last_ty = t.y
-                      
-                      this.lastK = t.k;
-
-                      this.thumbLock3 = true;
+              let domainY = this.yScale.domain();
+              let linearY = d3.scaleLinear().domain(this.yScale.range()).range([domainY[1] - domainY[0], 0]);   
+              let deltaY = linearY(t.y - this.lastY)
+              this.yScale.domain([domainY[0] + deltaY, domainY[1] + deltaY]);
+                                                
+            }
+            this.lastY = t.y;
+            this.lastX = t.x;
+            this.lastK = t.k;           
                     
-                    }     
-                }
-                
-                this.lastZoom1 = "xy";
-              }
-        
-            this.zoomID = "xy";
-            
-            this.count = this.count+1
-          
-            this.redraw(); 
-
-        })
-        .on("start", (event) => {
-          //document.getElementsByTagName("d3fc-svg")[0].style.cursor = "grab";
-          //console.log(event.transform,"------")
-        })
-        .on("end", (event) => {
-          //document.getElementsByTagName("d3fc-svg")[0].style.cursor = "default";
-          
-          var tt = event.transform
-
-          this.thumbLock3 = false;
-          this.thumbLock4 = false;
-          
+            this.redraw();                   
+                      
         })
 
         const xAxis = d3.axisBottom(this.xScale).tickFormat('').ticks(12);
@@ -903,8 +665,6 @@ class Candles2d extends Component {
                 var i = bisectDate(d.data, x0, 1)
                 var d0 = d.data[i-1]
                 var d1 = d.data[i]
-
-                //var xx = this.xScale(d1.index)
                 var xx = this.xScale(coords[0]);
                 var yy = this.yScale(coords[1]);
 
@@ -919,11 +679,8 @@ class Candles2d extends Component {
                 d3.select('d3fc-svg.right-axis').select("svg").select("rect").attr("transform","translate(" + 0 + "," + (y-15) + ")")
 
                 this.rect_coords = [x,y]
-                this.crosshair_data[0] = {x:coords[0], y:coords[1]}   
-
-                //this.crosshair_data[0] = {x:d1.index, y:y}
-
-                //console.log(d1.index, d1.date)                
+                this.crosshair_data[0] = {x:coords[0], y:coords[1]} 
+          
 
                 d3.select("d3fc-svg").select("svg").select(".annotation-crosshair").selectAll("g").selectAll("g").selectAll("g").style('stroke-width', this.toggle_crosshair ?"4px" : "0px")
 
@@ -965,23 +722,17 @@ class Candles2d extends Component {
     componentWillUnmount() {
   
         window.removeEventListener('resize', this.handle_resize);
-        //window.cancelAnimationFrame(this.requestID);
-        //this.controls.dispose();
-      
+     
     }
 
     redraw = () => {
 
         var data = this.candle_data
         d3.select("#chart").datum({ data }).call(this.chart)
-
-        //try {console.log(d3.select('d3fc-svg.bottom-axis').select("svg").select("rect")._groups[0][0])}
-        //catch (err) {console.log(err)}
-
-        //console.log(document.querySelector('#xaxis_rect'))
         
         if (document.querySelector('#xaxis_rect')==null) {
-          //console.log('kkkkk')
+		
+	  // CROSSHAIR
           var xaxis = d3
           .select("d3fc-svg.bottom-axis")
           .select("svg")
@@ -994,8 +745,6 @@ class Candles2d extends Component {
           .attr("fill","#ff0000")
           .append("g")
           .attr("class","x_tooltip")
-          .append("text")      
-          .text("XXX")
 
           var yaxis = d3
           .select("d3fc-svg.right-axis")
@@ -1009,8 +758,6 @@ class Candles2d extends Component {
           .attr("fill","#ff0000")
           .append("g")
           .attr("class","y_tooltip")
-          .append("text")      
-          .text("YYY")
         }
 
         
@@ -1030,7 +777,6 @@ class Candles2d extends Component {
 
             <div id="chart-container" >
                 <div id="chart"></div>
-                {/* <div id="loading"><span>loading...</span></div> */}
             </div>
    
         )
